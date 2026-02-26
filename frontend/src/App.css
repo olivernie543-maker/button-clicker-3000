@@ -1,0 +1,267 @@
+/* ============================================================
+   Global reset & base
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #ffffff;
+  color: #111111;
+  min-height: 100vh;
+}
+
+/* ============================================================
+   App layout – main area + leaderboard sidebar
+   ============================================================ */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Left / center content area */
+.main-area {
+  flex: 1;
+  position: relative;   /* anchor for .counter */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ============================================================
+   Counter – top-left
+   ============================================================ */
+.counter {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.counter-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #888888;
+}
+
+.counter-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111111;
+}
+
+/* ============================================================
+   Click button – centered
+   ============================================================ */
+.click-btn {
+  padding: 16px 48px;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #111111;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s, transform 0.08s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.click-btn:hover {
+  background: #333333;
+}
+
+.click-btn:focus-visible {
+  outline: 3px solid #6366f1;
+  outline-offset: 3px;
+}
+
+/* Short scale-down on press for tactile feedback */
+.click-btn--pressed {
+  transform: scale(0.95);
+  background: #000000;
+}
+
+/* ============================================================
+   Leaderboard sidebar – right side
+   ============================================================ */
+.leaderboard-panel {
+  width: 280px;
+  min-height: 100vh;
+  border-left: 1px solid #e5e5e5;
+  overflow-y: auto;
+}
+
+.leaderboard {
+  padding: 24px 16px;
+}
+
+.leaderboard-title {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #111111;
+  margin-bottom: 16px;
+  border-bottom: 2px solid #111111;
+  padding-bottom: 8px;
+}
+
+.leaderboard-empty {
+  font-size: 0.875rem;
+  color: #888888;
+  margin-top: 8px;
+}
+
+.leaderboard-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.leaderboard-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+/* Highlight the current user's row */
+.leaderboard-row--me {
+  background: #f0f0f0;
+  font-weight: 600;
+}
+
+.leaderboard-rank {
+  width: 28px;
+  text-align: right;
+  flex-shrink: 0;
+  color: #888888;
+  font-size: 0.8rem;
+}
+
+.leaderboard-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leaderboard-score {
+  flex-shrink: 0;
+  color: #555555;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   Username modal overlay
+   ============================================================ */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 32px 28px;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111111;
+}
+
+.modal-body {
+  font-size: 0.9rem;
+  color: #555555;
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-input {
+  padding: 10px 12px;
+  font-size: 1rem;
+  border: 1.5px solid #cccccc;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.modal-input:focus {
+  border-color: #111111;
+}
+
+.modal-error {
+  font-size: 0.825rem;
+  color: #d94040;
+}
+
+.modal-submit {
+  margin-top: 4px;
+  padding: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #111111;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.modal-submit:hover {
+  background: #333333;
+}
+
+.modal-hint {
+  font-size: 0.75rem;
+  color: #aaaaaa;
+  text-align: center;
+}
+
+/* ============================================================
+   Responsive – stack leaderboard below on small screens
+   ============================================================ */
+@media (max-width: 600px) {
+  .app-layout {
+    flex-direction: column;
+  }
+
+  .main-area {
+    min-height: 60vh;
+  }
+
+  .leaderboard-panel {
+    width: 100%;
+    min-height: auto;
+    border-left: none;
+    border-top: 1px solid #e5e5e5;
+  }
+}
