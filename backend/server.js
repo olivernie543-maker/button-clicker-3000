@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
 const Filter = require('bad-words');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const profanityFilter = new Filter();
@@ -10,12 +12,48 @@ app.use(cors());
 app.use(express.json());
 
 // ============================================================
-// In-memory data store
-// To swap in a real database, replace the `users` Map with DB
-// calls in each helper function below.
-// Structure: Map<userId, { username: string|null, clicks: number }>
+// File-based persistence
+// data.json sits next to server.js and survives server restarts.
+// To swap to a real database, replace loadData/saveData with DB calls.
+// ============================================================
+const DATA_FILE = path.join(__dirname, 'data.json');
+
+function loadData() {
+  if (!fs.existsSync(DATA_FILE)) return;
+  try {
+    const raw = fs.readFileSync(DATA_FILE, 'utf8');
+    const parsed = JSON.parse(raw);
+    for (const [userId, userData] of Object.entries(parsed)) {
+      users.set(userId, {
+        username:   userData.username   ?? null,
+        clicks:     userData.clicks     ?? 0,
+        clickBonus: userData.clickBonus ?? 1, // default: 1 click per press
+      });
+    }
+    console.log(`Loaded ${users.size} users from ${DATA_FILE}`);
+  } catch (e) {
+    console.error('Failed to load data.json:', e);
+  }
+}
+
+function saveData() {
+  try {
+    const obj = {};
+    for (const [userId, userData] of users.entries()) {
+      obj[userId] = userData;
+    }
+    fs.writeFileSync(DATA_FILE, JSON.stringify(obj, null, 2), 'utf8');
+  } catch (e) {
+    console.error('Failed to save data.json:', e);
+  }
+}
+
+// ============================================================
+// In-memory data store (backed by data.json for persistence)
+// Structure: Map<userId, { username, clicks, clickBonus }>
 // ============================================================
 const users = new Map();
+loadData(); // restore from disk on startup
 
 // ============================================================
 // Helper functions
@@ -81,7 +119,7 @@ function validateUsername(username) {
 /**
  * POST /api/click
  * Body: { userId?: string }
- * Increments click count for the user (creates a new user if needed).
+ * Increments click count by user.clickBonus (1 by default, 2 after upgrade).
  * Returns updated user info + leaderboard + whether username is needed.
  */
 app.post('/api/click', (req, res) => {
@@ -90,22 +128,25 @@ app.post('/api/click', (req, res) => {
   // Create a new user if userId is missing or unknown
   if (!userId || !users.has(userId)) {
     userId = uuidv4();
-    users.set(userId, { username: null, clicks: 0 });
+    users.set(userId, { username: null, clicks: 0, clickBonus: 1 });
   }
 
-  // Increment click count
+  // Increment by clickBonus (1 normally, 2 after "+1 Click" upgrade)
   const user = users.get(userId);
-  user.clicks += 1;
+  user.clicks += user.clickBonus;
+
+  saveData(); // persist after every click
 
   const inTop100 = isInTop100(userId);
   const needsUsername = inTop100 && user.username === null;
 
   res.json({
     userId,
-    clicks: user.clicks,
-    username: user.username,
+    clicks:     user.clicks,
+    username:   user.username,
+    clickBonus: user.clickBonus,
     inTop100,
-    needsUsername,   // true = prompt the user to enter a username
+    needsUsername,
     leaderboard: getLeaderboard(),
   });
 });
@@ -146,10 +187,47 @@ app.post('/api/username', (req, res) => {
   }
 
   users.get(userId).username = trimmed;
+  saveData();
 
   res.json({
     success: true,
     username: trimmed,
+    leaderboard: getLeaderboard(),
+  });
+});
+
+/**
+ * POST /api/upgrade
+ * Body: { userId: string }
+ * Purchases the "+1 Click" upgrade for 500 clicks.
+ * Sets clickBonus to 2 so every future click counts twice.
+ */
+app.post('/api/upgrade', (req, res) => {
+  const { userId } = req.body;
+  const UPGRADE_COST = 500;
+
+  if (!userId || !users.has(userId)) {
+    return res.status(400).json({ error: 'Invalid or unknown user ID' });
+  }
+
+  const user = users.get(userId);
+
+  if (user.clickBonus >= 2) {
+    return res.status(400).json({ error: 'Upgrade already purchased' });
+  }
+
+  if (user.clicks < UPGRADE_COST) {
+    return res.status(400).json({ error: 'Not enough clicks (need 500)' });
+  }
+
+  user.clicks     -= UPGRADE_COST; // deduct cost
+  user.clickBonus  = 2;            // each press now gives 2 clicks
+  saveData();
+
+  res.json({
+    userId,
+    clicks:     user.clicks,
+    clickBonus: user.clickBonus,
     leaderboard: getLeaderboard(),
   });
 });
@@ -168,9 +246,10 @@ app.get('/api/user/:userId', (req, res) => {
   const user = users.get(userId);
   res.json({
     userId,
-    clicks: user.clicks,
-    username: user.username,
-    inTop100: isInTop100(userId),
+    clicks:     user.clicks,
+    username:   user.username,
+    clickBonus: user.clickBonus ?? 1,
+    inTop100:   isInTop100(userId),
   });
 });
 

@@ -29,6 +29,62 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Smooth background color transition on each click */
+  transition: background-color 0.35s ease;
+}
+
+/* ============================================================
+   Click area – stacks upgrade button above the main button
+   ============================================================ */
+.click-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ============================================================
+   Upgrade button – "+1 Click"
+   ============================================================ */
+.upgrade-btn {
+  padding: 8px 22px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #6366f1;           /* indigo – distinct from the main black button */
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+  box-shadow: 0 3px 10px rgba(99, 102, 241, 0.35);
+  transition: background 0.12s, opacity 0.15s, transform 0.08s;
+}
+
+.upgrade-btn:hover:not(:disabled) {
+  background: #4f46e5;
+  transform: translateY(-1px);
+}
+
+/* Not enough clicks – muted appearance */
+.upgrade-btn--locked {
+  background: #a5b4fc;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* Already purchased – success/green tint */
+.upgrade-btn--owned {
+  background: #16a34a;
+  box-shadow: 0 3px 10px rgba(22, 163, 74, 0.3);
+  cursor: default;
+}
+
+.upgrade-cost,
+.upgrade-badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+  opacity: 0.85;
+  margin-left: 4px;
 }
 
 /* ============================================================
